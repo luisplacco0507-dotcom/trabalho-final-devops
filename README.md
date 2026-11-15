@@ -5,7 +5,7 @@
 **Integrantes:** Luis Felipe Placco; Isabella Mozzer Hakime; Livia Ayumi; Mariana Melendez; João Gabriel Alves.
 
 **Disciplina:** Integração e Entrega Contínua (DevOps)  
-**Entrega e apresentação:** 09/11/2026
+**Entrega:** 09/11/2026
 
 ## Objetivo
 
@@ -15,7 +15,8 @@ Aplicação CLI Python 3.10+ para processar um lote fixo de 10 transações do a
 
 - **Repositório:** https://github.com/luisplacco0507-dotcom/trabalho-final-devops
 - **Workflow:** [`.github/workflows/ci.yml`](.github/workflows/ci.yml) — histórico em [Actions](https://github.com/luisplacco0507-dotcom/trabalho-final-devops/actions/workflows/ci.yml)
-- **Pull Request de demonstração:** [#1 — Teste de CI/CD](https://github.com/luisplacco0507-dotcom/trabalho-final-devops/pull/1) (branch `teste-ci-cd` → `main`)
+- **Pull Request de demonstração:** [#1 — Teste de CI/CD](https://github.com/luisplacco0507-dotcom/trabalho-final-devops/pull/1) (branch `teste-ci-cd` → `main`), integrado à `main` pelo commit de merge `0da66ff`
+- **Passo a passo do que foi feito:** [PASSO-A-PASSO.md](PASSO-A-PASSO.md)
 
 ## Organização
 
@@ -27,7 +28,7 @@ Aplicação CLI Python 3.10+ para processar um lote fixo de 10 transações do a
 - `tests/`: testes unitários, de integração e execução do lote.
 - `pytest.ini`: configura `pythonpath` e `testpaths`, permitindo rodar `pytest` ou `python -m pytest`.
 - `.github/workflows/ci.yml`: validação automática de pushes e PRs para `main`.
-- `RELATORIO_TECNICO_FINAL.docx`: relatório técnico; `APRESENTACAO.md`: roteiro de fala.
+- `RELATORIO_TECNICO_FINAL.docx`: relatório técnico; `PASSO-A-PASSO.md`: explicação, em ordem, do que foi feito.
 
 ## Como o projeto foi desenvolvido
 
@@ -114,7 +115,7 @@ O workflow `CI - Testes, Migrações e Execução` (`.github/workflows/ci.yml`) 
 
 ## Validações efetivamente realizadas
 
-Todas as execuções abaixo são reais e podem ser conferidas nos links.
+Todas as execuções abaixo são reais e podem ser conferidas nos links. Commits posteriores também disparam o pipeline; o histórico completo está em [Actions](https://github.com/luisplacco0507-dotcom/trabalho-final-devops/actions).
 
 **GitHub Actions (15/11/2026, horário UTC):**
 
@@ -123,6 +124,8 @@ Todas as execuções abaixo são reais e podem ser conferidas nos links.
 | [43741705440](https://github.com/luisplacco0507-dotcom/trabalho-final-devops/actions/runs/43741705440) | push em `main` | `daedb87` (correção do CI) | ✅ success — 31 passed; aviso de Node.js 20 nas actions |
 | [43741830093](https://github.com/luisplacco0507-dotcom/trabalho-final-devops/actions/runs/43741830093) | push em `main` | `2ac36e1` (actions v7) | ✅ success — 31 passed; aviso de Node.js 20 eliminado |
 | [43742055811](https://github.com/luisplacco0507-dotcom/trabalho-final-devops/actions/runs/43742055811) | pull_request (PR #1) | `ec1c8b4` (badge no README) | ✅ success — 31 passed |
+| [43742542954](https://github.com/luisplacco0507-dotcom/trabalho-final-devops/actions/runs/43742542954) | push em `main` | `a5f4a1e` (documentação) | ✅ success — 31 passed |
+| [43742953406](https://github.com/luisplacco0507-dotcom/trabalho-final-devops/actions/runs/43742953406) | push em `main` | `0da66ff` (merge do PR #1) | ✅ success — 31 passed |
 
 Saídas registradas nos logs dessas execuções:
 
@@ -133,7 +136,7 @@ Saídas registradas nos logs dessas execuções:
 - Contract: `Migração 3 aplicada: 003_contract.sql`; colunas finais sem `cliente`, `total=10`.
 - Artefato `logs-ci` publicado.
 
-**Pull Request:** o [PR #1](https://github.com/luisplacco0507-dotcom/trabalho-final-devops/pull/1) disparou o workflow automaticamente no evento `pull_request`; o check `validar` passou. O PR foi mantido aberto, sem merge, aguardando a confirmação do grupo.
+**Pull Request:** o [PR #1](https://github.com/luisplacco0507-dotcom/trabalho-final-devops/pull/1) disparou o workflow automaticamente no evento `pull_request`; o check `validar` passou. Após a confirmação do grupo, o PR foi integrado à `main` por commit de merge (`0da66ff`), e a execução 43742953406 validou a `main` resultante.
 
 **Localmente (Windows, Python 3.14.7, SQLite 3.50.4):**
 
@@ -160,14 +163,6 @@ A lógica de negócio, os testes, as migrações SQL e o `main.py` não foram al
 - `WARNING`: rejeições e seus motivos.
 - `ERROR`: falhas inesperadas de leitura, persistência ou formato, com stack trace.
 - `time.perf_counter()`: duração total do lote em milissegundos.
-
-## Roteiro de apresentação (10–15 minutos)
-
-1. **Luis Felipe Placco (2 min)**: objetivo, arquitetura e estrutura do repositório.
-2. **Isabella Mozzer Hakime (2–3 min)**: regras de negócio e testes de limites; executar `pytest`.
-3. **Livia Ayumi (2–3 min)**: SQLite, Expand, Dual Write, Backfill e Contract.
-4. **Mariana Melendez (2–3 min)**: GitHub Actions; mostrar o PR #1 e o status dos checks.
-5. **João Gabriel Alves (2–3 min)**: executar `python main.py`, abrir `app.log`, explicar total e tempo.
 
 ## Limitações deliberadas
 
