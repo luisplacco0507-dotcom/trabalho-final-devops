@@ -1,5 +1,7 @@
 # Trabalho Prático Final — Integração e Entrega Contínua (DevOps)
 
+[![CI - Testes, Migrações e Execução](https://github.com/luisplacco0507-dotcom/trabalho-final-devops/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/luisplacco0507-dotcom/trabalho-final-devops/actions/workflows/ci.yml)
+
 **Integrantes:** Luis Felipe Placco; Isabella Mozzer Hakime; Livia Ayumi; Mariana Melendez; João Gabriel Alves.
 
 **Disciplina:** Integração e Entrega Contínua (DevOps)  
