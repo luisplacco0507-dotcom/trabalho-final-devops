@@ -12,7 +12,7 @@ Comando: `python -m pytest -v`.
 
 ## Mariana Melendez — CI/CD
 "Configuramos GitHub Actions para executar a cada push e pull request para main. O pipeline instala Python, roda testes, migra o banco, executa o processamento e verifica os resultados. Um pull request com falha de teste aparece com check vermelho; com testes aprovados, o check fica verde. A regra de bloqueio do merge deve ser configurada no GitHub caso desejemos impedir merges sem aprovação."  
-Mostrar o workflow e um PR real depois de publicar o projeto.
+Mostrar o workflow e o PR real: https://github.com/luisplacco0507-dotcom/trabalho-final-devops/pull/1 (aba *Checks*) e o histórico em https://github.com/luisplacco0507-dotcom/trabalho-final-devops/actions.
 
 ## João Gabriel Alves — Observabilidade e encerramento
 "Agora vamos executar a aplicação. O arquivo app.log registra INFO para aprovações, WARNING para rejeições e ERROR para falhas de execução. O resumo mostra dez transações, sete aprovadas, três rejeitadas e o tempo em milissegundos. Com isso demonstramos testes, evolução segura de banco, integração contínua e observabilidade."  
