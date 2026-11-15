@@ -1,7 +1,43 @@
+# Python: bytecode e caches
 __pycache__/
+*.py[cod]
 .pytest_cache/
-.venv/
-*.pyc
-*.db
-app.log
+.mypy_cache/
+.ruff_cache/
 .coverage
+htmlcov/
+*.egg-info/
+build/
+dist/
+
+# Ambientes virtuais
+.venv/
+venv/
+env/
+ENV/
+
+# Credenciais e variáveis de ambiente
+.env
+.env.*
+*.pem
+*.key
+credentials*.json
+secrets*.json
+
+# Bancos locais gerados pela aplicação (recriados a cada execução)
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Logs gerados em execução
+*.log
+
+# Arquivos temporários e de editores/SO
+*.tmp
+*.bak
+~$*
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

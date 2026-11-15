@@ -5,6 +5,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   validar:
     runs-on: ubuntu-latest
@@ -27,11 +30,31 @@ jobs:
         run: python main.py
       - name: Verificar 10 registros e estados
         run: |
-          python -c "import sqlite3; db=sqlite3.connect('sistema.db'); assert db.execute('select count(*) from transacoes').fetchone()[0] == 10; assert db.execute("select count(*) from transacoes where status='REJEITADO'").fetchone()[0] == 3"
+          python - <<'EOF'
+          import sqlite3
+          db = sqlite3.connect("sistema.db")
+          total = db.execute("SELECT COUNT(*) FROM transacoes").fetchone()[0]
+          rejeitados = db.execute("SELECT COUNT(*) FROM transacoes WHERE status = 'REJEITADO'").fetchone()[0]
+          sem_nome = db.execute("SELECT COUNT(*) FROM transacoes WHERE primeiro_nome IS NULL OR sobrenome IS NULL").fetchone()[0]
+          print(f"total={total} rejeitados={rejeitados} sem_nome={sem_nome}")
+          assert total == 10, f"esperado 10 registros, obtido {total}"
+          assert rejeitados == 3, f"esperado 3 rejeitados, obtido {rejeitados}"
+          assert sem_nome == 0, "dual write/backfill não preencheu primeiro_nome/sobrenome"
+          EOF
       - name: Validar etapa Contract em cópia do banco
         run: |
           cp sistema.db contrato.db
           python scripts/migrar.py --banco contrato.db --ate 3
+          python - <<'EOF'
+          import sqlite3
+          db = sqlite3.connect("contrato.db")
+          colunas = [linha[1] for linha in db.execute("PRAGMA table_info(transacoes)")]
+          total = db.execute("SELECT COUNT(*) FROM transacoes").fetchone()[0]
+          print(f"colunas={colunas} total={total}")
+          assert "cliente" not in colunas, "Contract não removeu a coluna cliente"
+          assert {"primeiro_nome", "sobrenome"} <= set(colunas)
+          assert total == 10, "Contract perdeu registros"
+          EOF
       - name: Salvar log como artefato
         if: always()
         uses: actions/upload-artifact@v4
