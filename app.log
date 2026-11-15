@@ -1,0 +1,12 @@
+2026-11-15 15:54:11,675 | INFO | Iniciando lote com 10 transações
+2026-11-15 15:54:11,682 | INFO | TX1001 APROVADO | desconto=R$ 0.00 | final=R$ 150.00
+2026-11-15 15:54:11,688 | INFO | TX1002 APROVADO | desconto=R$ 8.00 | final=R$ 72.00
+2026-11-15 15:54:11,694 | INFO | TX1003 APROVADO | desconto=R$ 75.00 | final=R$ 425.00
+2026-11-15 15:54:11,699 | INFO | TX1004 APROVADO | desconto=R$ 0.00 | final=R$ 200.00
+2026-11-15 15:54:11,705 | WARNING | TX1005 REJEITADO | valor_bruto deve ser maior que zero
+2026-11-15 15:54:11,711 | WARNING | TX1006 REJEITADO | cpf deve conter exatamente 11 dígitos numéricos
+2026-11-15 15:54:11,717 | INFO | TX1007 APROVADO | desconto=R$ 150.00 | final=R$ 850.00
+2026-11-15 15:54:11,723 | WARNING | TX1008 REJEITADO | valor_bruto deve ser maior que zero
+2026-11-15 15:54:11,728 | INFO | TX1009 APROVADO | desconto=R$ 0.00 | final=R$ 350.50
+2026-11-15 15:54:11,733 | INFO | TX10010 APROVADO | desconto=R$ 18.00 | final=R$ 102.00
+2026-11-15 15:54:11,734 | INFO | Resumo: total=10 aprovados=7 rejeitados=3 tempo=74.75 ms

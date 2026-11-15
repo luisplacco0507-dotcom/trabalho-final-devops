@@ -30,8 +30,10 @@ secrets*.json
 *.sqlite
 *.sqlite3
 
-# Logs gerados em execução
+# Logs gerados em execução (app.log é versionado como exemplo de execução real,
+# conforme a estrutura pedida no enunciado)
 *.log
+!app.log
 
 # Arquivos temporários e de editores/SO
 *.tmp

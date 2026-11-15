@@ -20,10 +20,10 @@ Criamos duas funções puras, sem acesso a banco:
 
 ## Passo 2 — Testes automatizados (`tests/`)
 
-Escrevemos 31 testes com pytest:
+Escrevemos 32 testes com pytest:
 
 - **Unitários** (`test_regra_negocio.py`): os 10 casos do JSON, limites de idade 59/60, idades inválidas, CPFs inválidos, valores negativo/zero/nulo, menor comprando eletrônicos, desconto máximo de 25% e arredondamento.
-- **Integração com banco** (`test_database.py`): gravar e ler em SQLite em memória e percorrer toda a migração Expand-Contract em um arquivo temporário.
+- **Integração com banco** (`test_database.py`): gravar e ler em SQLite em memória e percorrer toda a migração Expand-Contract em um arquivo temporário, além de comprovar que `cliente` passa a aceitar NULL após o Expand.
 - **Ponta a ponta** (`test_main.py`): processar o lote completo e conferir os totais 10/7/3 e os logs.
 
 Como rodar:
@@ -43,7 +43,7 @@ Objetivo: trocar `cliente` por `primeiro_nome` + `sobrenome` sem quebrar a aplic
 
 | Etapa | Arquivo | O que faz |
 |-------|---------|-----------|
-| Expand | `001_expand.sql` | adiciona `primeiro_nome` e `sobrenome`; `cliente` continua existindo |
+| Expand | `001_expand.sql` | adiciona `primeiro_nome` e `sobrenome`; `cliente` continua existindo e passa a aceitar NULL (tabela reconstruída, sem perda de dados) |
 | Dual Write | `database.py` | durante a transição, grava no campo antigo **e** nos novos |
 | Backfill | `002_backfill.sql` | preenche os campos novos dos registros antigos |
 | Contract | `003_contract.sql` | remove `cliente`; o executor só aplica se não houver nome vazio |
@@ -76,10 +76,10 @@ python main.py
 A cada push ou pull request para `main`, o GitHub executa automaticamente:
 
 1. instalação do Python 3.10 e das dependências;
-2. `pytest` com os 31 testes;
+2. `pytest` com todos os testes;
 3. criação do banco e migrações Expand + Backfill;
 4. `python main.py`;
-5. verificação no banco: 10 registros, 3 rejeitados e nenhum nome vazio;
+5. verificação no banco: 10 registros, 3 rejeitados, nenhum nome vazio e `cliente` aceitando NULL;
 6. Contract em uma cópia do banco, conferindo que `cliente` saiu sem perder registros;
 7. publicação do `app.log` como artefato.
 
@@ -94,8 +94,10 @@ Ao revisar o projeto, encontramos e corrigimos:
 3. **Aviso de Node.js 20 descontinuado:** atualizamos as actions para a versão `@v7`.
 4. **`.gitignore` incompleto:** agora exclui ambientes virtuais, credenciais, bancos, logs e temporários.
 5. **`pytest` sem `python -m` não funcionava:** criamos o `pytest.ini`.
+6. **Expand não deixava `cliente` aceitar nulos** (exigência do enunciado): a migração 001 passou a reconstruir a tabela com `cliente` opcional; um teste novo e o CI verificam isso.
+7. **`app.log` fora do repositório** (listado na estrutura do enunciado): passou a ser versionado com o log de uma execução real.
 
-A lógica de negócio, os testes e as migrações não foram alterados.
+A lógica de negócio, o `main.py` e os testes originais não foram alterados; a migração 001 foi ajustada e um teste foi acrescentado.
 
 ## Passo 8 — Publicação no GitHub
 
@@ -114,7 +116,7 @@ Execuções no GitHub Actions em 15/11/2026, todas aprovadas, com 31 testes pass
 | [43742542954](https://github.com/luisplacco0507-dotcom/trabalho-final-devops/actions/runs/43742542954) | push com a documentação |
 | [43742953406](https://github.com/luisplacco0507-dotcom/trabalho-final-devops/actions/runs/43742953406) | merge do Pull Request #1 na `main` |
 
-Commits posteriores também disparam o pipeline; o histórico completo está em [Actions](https://github.com/luisplacco0507-dotcom/trabalho-final-devops/actions).
+Depois do ajuste do Expand (itens 6 e 7 do Passo 7), o pytest passa a ter 32 testes. Commits posteriores também disparam o pipeline; o histórico completo está em [Actions](https://github.com/luisplacco0507-dotcom/trabalho-final-devops/actions).
 
 ## Passo 10 — Demonstração com Pull Request
 

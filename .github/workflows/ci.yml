@@ -36,10 +36,12 @@ jobs:
           total = db.execute("SELECT COUNT(*) FROM transacoes").fetchone()[0]
           rejeitados = db.execute("SELECT COUNT(*) FROM transacoes WHERE status = 'REJEITADO'").fetchone()[0]
           sem_nome = db.execute("SELECT COUNT(*) FROM transacoes WHERE primeiro_nome IS NULL OR sobrenome IS NULL").fetchone()[0]
-          print(f"total={total} rejeitados={rejeitados} sem_nome={sem_nome}")
+          cliente_notnull = {linha[1]: linha[3] for linha in db.execute("PRAGMA table_info(transacoes)")}["cliente"]
+          print(f"total={total} rejeitados={rejeitados} sem_nome={sem_nome} cliente_notnull={cliente_notnull}")
           assert total == 10, f"esperado 10 registros, obtido {total}"
           assert rejeitados == 3, f"esperado 3 rejeitados, obtido {rejeitados}"
           assert sem_nome == 0, "dual write/backfill não preencheu primeiro_nome/sobrenome"
+          assert cliente_notnull == 0, "Expand deveria deixar cliente aceitando NULL"
           EOF
       - name: Validar etapa Contract em cópia do banco
         run: |

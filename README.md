@@ -26,6 +26,7 @@ Aplicação CLI Python 3.10+ para processar um lote fixo de 10 transações do a
 - `alembic/`: scripts SQL de migração (opção permitida pelo enunciado, sem Alembic Python).
 - `scripts/migrar.py`: executor sequencial das migrações SQL, com tabela `schema_migrations`.
 - `tests/`: testes unitários, de integração e execução do lote.
+- `app.log`: log de uma execução real do fluxo completo (versionado como exemplo, conforme a estrutura do enunciado).
 - `pytest.ini`: configura `pythonpath` e `testpaths`, permitindo rodar `pytest` ou `python -m pytest`.
 - `.github/workflows/ci.yml`: validação automática de pushes e PRs para `main`.
 - `RELATORIO_TECNICO_FINAL.docx`: relatório técnico; `PASSO-A-PASSO.md`: explicação, em ordem, do que foi feito.
@@ -47,7 +48,7 @@ python -m pip install -r requirements.txt
 python main.py
 ```
 
-O comando gera `sistema.db` e `app.log` na pasta do projeto (ambos ignorados pelo Git). O log também aparece no console. **Resultado esperado:** 10 transações, 7 aprovadas e 3 rejeitadas (TX1005, TX1006 e TX1008). CPFs de exemplo são avaliados apenas pelo formato de 11 dígitos, como solicitado, não pelo dígito verificador.
+O comando gera `sistema.db` (ignorado pelo Git) e grava o log em `app.log`. O `app.log` versionado contém uma execução real; novas execuções são acrescentadas ao final do arquivo. O log também aparece no console. **Resultado esperado:** 10 transações, 7 aprovadas e 3 rejeitadas (TX1005, TX1006 e TX1008). CPFs de exemplo são avaliados apenas pelo formato de 11 dígitos, como solicitado, não pelo dígito verificador.
 
 **Atenção:** `id_transacao` é chave primária. Executar de novo no mesmo banco gera erro de chave duplicada e o programa termina com código 1. Para repetir, apague `sistema.db` (somente banco de demonstração) ou use outro caminho:
 
@@ -61,10 +62,10 @@ python main.py --banco demonstracao.db --log demonstracao.log
 python -m pytest -v
 ```
 
-São 31 testes:
+São 32 testes:
 
 - `tests/test_regra_negocio.py` (unitários): os 10 casos do JSON, idade 59/60, idades inválidas, CPFs inválidos (curto, letras, dígitos Unicode, número em vez de texto), valor negativo/zero/nulo, menor em eletrônicos, descontos acumulados com teto de 25% e arredondamento monetário.
-- `tests/test_database.py` (integração): inserção e consulta em SQLite `:memory:`; evolução completa do esquema (v1 → Expand → Backfill/Dual Write → Contract) em arquivo temporário, incluindo idempotência da migração.
+- `tests/test_database.py` (integração): inserção e consulta em SQLite `:memory:`; evolução completa do esquema (v1 → Expand → Backfill/Dual Write → Contract) em arquivo temporário, incluindo idempotência da migração; e um teste que comprova que `cliente` é obrigatória na v1 e passa a aceitar NULL após o Expand, sem perda de dados.
 - `tests/test_main.py` (integração ponta a ponta): processamento do lote completo, totais 10/7/3 e presença de logs INFO/WARNING e do tempo de execução.
 
 ## Regras de negócio
@@ -80,7 +81,7 @@ São 31 testes:
 
 A versão v1 da tabela `transacoes` contém a coluna legada `cliente` (nome completo). O objetivo é substituí-la por `primeiro_nome` e `sobrenome` sem quebrar a aplicação em nenhum momento:
 
-1. **Expand (`001_expand.sql`)**: adiciona `primeiro_nome` e `sobrenome` como colunas opcionais, sem remover `cliente`. Versões antigas do código continuam funcionando.
+1. **Expand (`001_expand.sql`)**: adiciona `primeiro_nome` e `sobrenome` como colunas opcionais e mantém `cliente`, que passa a **aceitar valores nulos**, como pede o enunciado. Como o SQLite não remove `NOT NULL` com `ALTER COLUMN`, a tabela é reconstruída dentro de uma transação (cria a nova estrutura, copia todas as linhas, troca as tabelas). Versões antigas do código continuam funcionando, e uma versão nova já pode gravar só os campos novos.
 2. **Dual Write + Backfill (`002_backfill.sql`)**: `database.py` passa a gravar ao mesmo tempo no campo antigo e nos novos (ele detecta quais colunas existem). O SQL preenche os registros anteriores: o primeiro termo do nome vira `primeiro_nome` e o restante, `sobrenome`.
 3. **Contract (`003_contract.sql`)**: remove `cliente` somente depois que todas as aplicações leem os campos novos. Antes de aplicar, `scripts/migrar.py` confere que não há registros com `primeiro_nome`/`sobrenome` nulos e aborta se o backfill estiver incompleto.
 
@@ -107,7 +108,7 @@ O workflow `CI - Testes, Migrações e Execução` (`.github/workflows/ci.yml`) 
 | 4 | Testes automatizados | `python -m pytest -v` (unitários e integração) |
 | 5 | Criar banco e aplicar Expand + Backfill | cria o esquema v1 e roda `scripts/migrar.py --ate 2` |
 | 6 | Executar lote ponta a ponta | `python main.py` |
-| 7 | Verificar 10 registros e estados | confere 10 registros, 3 rejeitados e nenhum `primeiro_nome`/`sobrenome` nulo |
+| 7 | Verificar 10 registros e estados | confere 10 registros, 3 rejeitados, nenhum `primeiro_nome`/`sobrenome` nulo e `cliente` aceitando NULL |
 | 8 | Validar etapa Contract em cópia do banco | roda `--ate 3` em `contrato.db` e confere que `cliente` saiu sem perda de registros |
 | 9 | Salvar log como artefato | publica `app.log` como artefato `logs-ci` (sempre, mesmo em falha) |
 
@@ -140,10 +141,12 @@ Saídas registradas nos logs dessas execuções:
 
 **Localmente (Windows, Python 3.14.7, SQLite 3.50.4):**
 
-- `python -m pytest`: 31 passed, código de saída 0.
+- `python -m pytest`: 31 passed, código de saída 0 (32 passed após o ajuste do Expand).
 - Simulação do pipeline em cópia limpa do projeto: criação do banco, Expand + Backfill, `main.py` (10/7/3), verificação e Contract, todos com código 0.
 - Falha esperada: executar `main.py` duas vezes no mesmo banco termina com código 1 (`UNIQUE constraint failed`), com o erro registrado no log.
 - A linha original do passo de verificação do CI, executada em `bash -e`, falhou com `syntax error near unexpected token '('` (código 2), o que confirmou o defeito corrigido.
+
+**Ajuste após a comparação com o enunciado (PDF):** o Expand passou a deixar `cliente` aceitando NULL e o `app.log` passou a ser versionado. Localmente: `python -m pytest` com 32 passed e simulação completa do pipeline com código 0 (`cliente_notnull=0`). Com isso o pytest passa a ter 32 testes; a execução correspondente no GitHub fica no histórico de Actions.
 
 **Não demonstrado no GitHub:** uma execução com check vermelho. O comportamento de falha foi verificado localmente e decorre do `bash -e` mostrado nos logs, mas não houve push intencional de código quebrado.
 
@@ -152,10 +155,12 @@ Saídas registradas nos logs dessas execuções:
 1. **Passo de verificação do CI quebrado (crítico).** O passo "Verificar 10 registros e estados" usava `python -c "..."` com aspas duplas internas (`"select ... status='REJEITADO'"`). O bash encerrava a string no meio e falhava com erro de sintaxe, então o pipeline nunca passaria. **Correção:** o script Python foi movido para um *heredoc* (`python - <<'EOF'`), que também passou a verificar o dual write/backfill.
 2. **Contract sem verificação.** O passo só executava a migração 3. **Correção:** depois do Contract, o CI confere que `cliente` foi removida, que `primeiro_nome`/`sobrenome` existem e que os 10 registros permanecem.
 3. **Actions em Node.js 20 (descontinuado).** A primeira execução gerou um aviso de depreciação. **Correção:** `checkout`, `setup-python` e `upload-artifact` foram atualizadas para `@v7` (Node.js 24); o aviso não aparece mais.
-4. **`.gitignore` incompleto.** Faltavam ambientes virtuais alternativos, `.env`/credenciais, logs genéricos, arquivos temporários e de editores. **Correção:** o arquivo foi ampliado; `sistema.db` e `app.log` gerados localmente não são versionados.
+4. **`.gitignore` incompleto.** Faltavam ambientes virtuais alternativos, `.env`/credenciais, logs genéricos, arquivos temporários e de editores. **Correção:** o arquivo foi ampliado; os bancos locais (`sistema.db`) não são versionados.
 5. **`pytest` sem `python -m`.** Só funcionava como `python -m pytest`, porque a raiz do projeto não entrava no `sys.path`. **Correção:** `pytest.ini` com `pythonpath = .`.
+6. **Expand mantinha `cliente` como NOT NULL.** O enunciado pede adicionar as colunas novas "mantendo cliente aceitando valores nulos". **Correção:** `001_expand.sql` reconstrói a tabela com `cliente` opcional, preservando todos os dados; um teste novo e o CI verificam essa condição. O teste novo falha com a versão anterior da migração.
+7. **`app.log` fora do repositório.** A estrutura do enunciado lista `app.log` como "log de execução gerado", mas o `.gitignore` o excluía. **Correção:** o arquivo é versionado com o log de uma execução real (`!app.log` no `.gitignore`).
 
-A lógica de negócio, os testes, as migrações SQL e o `main.py` não foram alterados.
+A lógica de negócio, o `main.py`, o `database.py` e os testes originais não foram alterados; a migração `001_expand.sql` foi ajustada (item 6) e um teste foi acrescentado.
 
 ## Logs e observabilidade
 
